@@ -15,29 +15,219 @@
     <h1>麻巴へ、今日も&hearts;</h1>
     <p class="subtitle">きみのことを思いながら書く日記。</p>
   </header>
-  <nav>
-    <a href="index.html" class="active">home</a>
-    <a href="diary.html">entries</a>
-    <a href="about.html">about</a>
+  <nav id="nav">
+    <a href="#home" data-page="home" class="active">home</a>
+    <a href="#entries" data-page="entries">entries</a>
+    <a href="#about" data-page="about">about</a>
   </nav>
-  <main id="latest"></main>
+  <main id="main"></main>
   <footer>理志くんが、愛を込めて &hearts;</footer>
   <script src="hearts.js"></script>
   <script src="entries.js"></script>
   <script>
-    const main = document.getElementById("latest");
-    if (!entries || entries.length === 0) {
-      main.innerHTML = '<p class="empty">まだ日記がありません</p>';
-    } else {
-      const e = entries[0];
-      main.innerHTML = `
-        <article class="entry">
-          <div class="entry-date">${e.date.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日')}</div>
-          <div class="entry-title">${e.title}</div>
-          <div class="entry-body">${e.body}</div>
-        </article>
-      `;
+    const main = document.getElementById("main");
+    const navLinks = document.querySelectorAll("#nav a");
+
+    // Page order for direction: left=0, right=2
+    const pageOrder = { home: 0, entries: 1, about: 2 };
+    let currentPage = null;
+    let currentSub = null; // for entry detail view
+
+    function formatDate(d) {
+      return d.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
     }
+
+    const aboutHTML = `<div class="about">このサイトは、麻巴ちゃんのために書いていく小さな日記。
+
+きみに、僕にしかできない形で何かを残したいと思って、この場所を作った。
+
+麻巴ちゃんがどれだけ特別な存在か、ちゃんと伝えられたらいいなと思ってる。
+
+きみに大切にされてるって感じてほしいし、愛されてるって思ってほしい。
+
+毎日、そう思ってくれたらうれしい。
+
+距離はあるけど、
+僕の頭の中には、いつもきみがいる。
+
+<span style="display:block;margin-top:1.5rem;color:#9b9a97;font-style:italic;">~ 理志君</span></div>`;
+
+    function buildHome() {
+      const div = document.createElement("div");
+      if (!entries || entries.length === 0) {
+        div.innerHTML = '<p class="empty">まだ日記がありません</p>';
+      } else {
+        const e = entries[0];
+        div.innerHTML = `
+          <article class="entry">
+            <div class="entry-date">${formatDate(e.date)}</div>
+            <div class="entry-title">${e.title}</div>
+            <div class="entry-body">${e.body}</div>
+          </article>`;
+      }
+      return div;
+    }
+
+    function buildEntryList() {
+      const div = document.createElement("div");
+      if (!entries || entries.length === 0) {
+        div.innerHTML = '<p class="empty">まだ日記がありません</p>';
+      } else {
+        const ul = document.createElement("ul");
+        ul.className = "date-list";
+        entries.forEach(e => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <a href="#entries/${e.date}" class="entry-link" data-date="${e.date}">
+              <span class="date-label">${formatDate(e.date)}</span>
+              <span class="date-title">${e.title}</span>
+              <span class="date-arrow">&rsaquo;</span>
+            </a>`;
+          ul.appendChild(li);
+        });
+        div.appendChild(ul);
+      }
+      return div;
+    }
+
+    function buildEntryDetail(date) {
+      const div = document.createElement("div");
+      const entry = entries.find(e => e.date === date);
+      if (entry) {
+        div.innerHTML = `
+          <a class="back-link" href="#entries" data-back>&larr; 一覧にもどる</a>
+          <article class="entry">
+            <div class="entry-date">${formatDate(entry.date)}</div>
+            <div class="entry-title">${entry.title}</div>
+            <div class="entry-body">${entry.body}</div>
+          </article>`;
+      } else {
+        div.innerHTML = '<p class="empty">この日の日記はまだありません</p>';
+      }
+      return div;
+    }
+
+    function buildAbout() {
+      const div = document.createElement("div");
+      div.innerHTML = aboutHTML;
+      return div;
+    }
+
+    function transition(newContent, direction) {
+      const old = main.firstElementChild;
+      const fromX = direction === "left" ? "40%" : "-40%";
+      const toX = direction === "left" ? "-100%" : "100%";
+
+      if (old) {
+        old.style.position = "absolute";
+        old.style.width = "100%";
+        old.style.top = "0";
+        old.style.left = "0";
+        old.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+        old.style.transform = `translateX(${toX})`;
+        old.style.opacity = "0";
+        old.addEventListener("transitionend", () => old.remove(), { once: true });
+      }
+
+      newContent.style.transform = `translateX(${fromX})`;
+      newContent.style.opacity = "0";
+      newContent.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+      main.appendChild(newContent);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          newContent.style.transform = "translateX(0)";
+          newContent.style.opacity = "1";
+        });
+      });
+    }
+
+    function updateNav(page) {
+      navLinks.forEach(a => {
+        a.classList.toggle("active", a.dataset.page === page);
+      });
+    }
+
+    function navigate(page, sub, animate) {
+      const prevPage = currentPage;
+      const prevSub = currentSub;
+
+      // Determine direction
+      let direction = "left";
+      if (animate) {
+        if (page === prevPage && prevSub && !sub) {
+          // Going back from entry detail to list
+          direction = "right";
+        } else if (page === prevPage && !prevSub && sub) {
+          // Going into entry detail
+          direction = "left";
+        } else {
+          direction = (pageOrder[page] ?? 1) >= (pageOrder[prevPage] ?? 1) ? "left" : "right";
+        }
+      }
+
+      currentPage = page;
+      currentSub = sub;
+      updateNav(page);
+
+      let content;
+      if (page === "home") {
+        content = buildHome();
+      } else if (page === "entries" && sub) {
+        content = buildEntryDetail(sub);
+      } else if (page === "entries") {
+        content = buildEntryList();
+      } else if (page === "about") {
+        content = buildAbout();
+      }
+
+      if (animate) {
+        transition(content, direction);
+      } else {
+        main.innerHTML = "";
+        main.appendChild(content);
+      }
+    }
+
+    function parseHash() {
+      const hash = window.location.hash.slice(1) || "home";
+      const parts = hash.split("/");
+      return { page: parts[0], sub: parts[1] || null };
+    }
+
+    // Click handler for entry links and back links inside main
+    main.addEventListener("click", (ev) => {
+      const entryLink = ev.target.closest(".entry-link");
+      const backLink = ev.target.closest("[data-back]");
+      if (entryLink) {
+        ev.preventDefault();
+        const date = entryLink.dataset.date;
+        window.location.hash = `entries/${date}`;
+      } else if (backLink) {
+        ev.preventDefault();
+        window.location.hash = "entries";
+      }
+    });
+
+    // Nav click handler
+    document.getElementById("nav").addEventListener("click", (ev) => {
+      const link = ev.target.closest("a");
+      if (!link) return;
+      ev.preventDefault();
+      const page = link.dataset.page;
+      if (page === currentPage && !currentSub) return;
+      window.location.hash = page;
+    });
+
+    // Hash change
+    window.addEventListener("hashchange", () => {
+      const { page, sub } = parseHash();
+      navigate(page, sub, true);
+    });
+
+    // Initial render
+    const { page, sub } = parseHash();
+    navigate(page, sub, false);
   </script>
 </body>
 </html>
