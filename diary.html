@@ -82,6 +82,8 @@
 
       const old = main.firstElementChild;
       if (old) {
+        old.style.position = "absolute";
+        old.style.width = "100%";
         old.style.transition = "transform 0.3s ease, opacity 0.3s ease";
         old.style.transform = direction === "back" ? "translateX(100%)" : "translateX(-100%)";
         old.style.opacity = "0";
