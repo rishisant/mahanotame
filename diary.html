@@ -26,48 +26,93 @@
   <script src="entries.js"></script>
   <script>
     const main = document.getElementById("diary");
-    const hash = window.location.hash.slice(1);
 
     function formatDate(d) {
       return d.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
     }
 
-    if (hash) {
-      // Show single entry
-      const entry = entries.find(e => e.date === hash);
-      if (entry) {
-        main.innerHTML = `
-          <article class="entry">
-            <div class="entry-date">${formatDate(entry.date)}</div>
-            <div class="entry-title">${entry.title}</div>
-            <div class="entry-body">${entry.body}</div>
-          </article>
-          <a href="diary.html" class="back-link">&larr; 一覧にもどる</a>
-        `;
-      } else {
-        main.innerHTML = '<p class="empty">この日の日記はまだありません</p>';
-      }
-    } else {
-      // Show date list
-      if (!entries || entries.length === 0) {
-        main.innerHTML = '<p class="empty">まだ日記がありません</p>';
-      } else {
-        const ul = document.createElement("ul");
-        ul.className = "date-list";
-        entries.forEach(e => {
-          const li = document.createElement("li");
-          li.innerHTML = `
-            <a href="diary.html#${e.date}">
-              <span class="date-label">${formatDate(e.date)}</span>
-              <span class="date-title">${e.title}</span>
-              <span class="date-arrow">&rsaquo;</span>
-            </a>
+    function buildContent(hash) {
+      const div = document.createElement("div");
+      if (hash) {
+        const entry = entries.find(e => e.date === hash);
+        if (entry) {
+          div.innerHTML = `
+            <a class="back-link" href="diary.html">&larr; 一覧にもどる</a>
+            <article class="entry">
+              <div class="entry-date">${formatDate(entry.date)}</div>
+              <div class="entry-title">${entry.title}</div>
+              <div class="entry-body">${entry.body}</div>
+            </article>
           `;
-          ul.appendChild(li);
-        });
-        main.appendChild(ul);
+        } else {
+          div.innerHTML = '<p class="empty">この日の日記はまだありません</p>';
+        }
+      } else {
+        if (!entries || entries.length === 0) {
+          div.innerHTML = '<p class="empty">まだ日記がありません</p>';
+        } else {
+          const ul = document.createElement("ul");
+          ul.className = "date-list";
+          entries.forEach(e => {
+            const li = document.createElement("li");
+            li.innerHTML = `
+              <a href="diary.html#${e.date}">
+                <span class="date-label">${formatDate(e.date)}</span>
+                <span class="date-title">${e.title}</span>
+                <span class="date-arrow">&rsaquo;</span>
+              </a>
+            `;
+            ul.appendChild(li);
+          });
+          div.appendChild(ul);
+        }
       }
+      return div;
     }
+
+    function render(animate, direction) {
+      const hash = window.location.hash.slice(1);
+      const newContent = buildContent(hash);
+
+      if (!animate) {
+        main.innerHTML = "";
+        main.appendChild(newContent);
+        return;
+      }
+
+      const old = main.firstElementChild;
+      if (old) {
+        old.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+        old.style.transform = direction === "back" ? "translateX(100%)" : "translateX(-100%)";
+        old.style.opacity = "0";
+        old.addEventListener("transitionend", () => old.remove(), { once: true });
+      }
+
+      newContent.style.transform = direction === "back" ? "translateX(-40%)" : "translateX(40%)";
+      newContent.style.opacity = "0";
+      newContent.style.transition = "transform 0.3s ease, opacity 0.3s ease";
+      main.appendChild(newContent);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          newContent.style.transform = "translateX(0)";
+          newContent.style.opacity = "1";
+        });
+      });
+    }
+
+    // Back link: intercept click to animate
+    main.addEventListener("click", (ev) => {
+      const link = ev.target.closest(".back-link");
+      if (link) {
+        ev.preventDefault();
+        history.pushState(null, "", "diary.html");
+        render(true, "back");
+      }
+    });
+
+    render(false);
+    window.addEventListener("hashchange", () => render(true, "forward"));
   </script>
 </body>
 </html>
