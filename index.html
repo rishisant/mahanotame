@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>まはへの日記</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+      background: #fdf6f0;
+      color: #5a4a42;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      padding: 3rem 1rem 2rem;
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      color: #c27a6e;
+      letter-spacing: 0.1em;
+    }
+
+    header p {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #b09a90;
+    }
+
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 0 1.5rem 4rem;
+    }
+
+    .entry {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.8rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(160, 130, 120, 0.08);
+    }
+
+    .entry-date {
+      font-size: 0.8rem;
+      color: #c9a99e;
+      margin-bottom: 0.3rem;
+    }
+
+    .entry-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #7a5f55;
+      margin-bottom: 1rem;
+    }
+
+    .entry-body {
+      font-size: 0.95rem;
+      line-height: 1.9;
+      white-space: pre-line;
+      color: #6b5a52;
+    }
+
+    .no-entries {
+      text-align: center;
+      padding: 3rem;
+      color: #b09a90;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: 0.75rem;
+      color: #c9a99e;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>まはへの日記</h1>
+    <p>毎日のきもち</p>
+  </header>
+  <main id="entries"></main>
+  <footer>&hearts;</footer>
+  <script src="entries.js"></script>
+  <script>
+    const main = document.getElementById("entries");
+
+    if (!entries || entries.length === 0) {
+      main.innerHTML = '<p class="no-entries">まだ日記がありません</p>';
+    } else {
+      entries.forEach(e => {
+        const d = document.createElement("article");
+        d.className = "entry";
+        d.innerHTML = `
+          <div class="entry-date">${e.date}</div>
+          <div class="entry-title">${e.title}</div>
+          <div class="entry-body">${e.body}</div>
+        `;
+        main.appendChild(d);
+      });
+    }
+  </script>
+</body>
+</html>
