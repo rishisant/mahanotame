@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>麻巴へ、今日も♥</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="accent-bar"></div>
+  <header>
+    <h1>麻巴へ、今日も&hearts;</h1>
+    <p class="subtitle">きみのことを思いながら書く日記。</p>
+  </header>
+  <nav>
+    <a href="index.html">home</a>
+    <a href="diary.html" class="active">entries</a>
+    <a href="about.html">about</a>
+  </nav>
+  <main id="diary"></main>
+  <footer>理志くんが、愛を込めて &hearts;</footer>
+  <script src="hearts.js"></script>
+  <script src="entries.js"></script>
+  <script>
+    const main = document.getElementById("diary");
+    const hash = window.location.hash.slice(1);
+
+    function formatDate(d) {
+      return d.replace(/(\d{4})-(\d{2})-(\d{2})/, '$1年$2月$3日');
+    }
+
+    if (hash) {
+      // Show single entry
+      const entry = entries.find(e => e.date === hash);
+      if (entry) {
+        main.innerHTML = `
+          <article class="entry">
+            <div class="entry-date">${formatDate(entry.date)}</div>
+            <div class="entry-title">${entry.title}</div>
+            <div class="entry-body">${entry.body}</div>
+          </article>
+          <a href="diary.html" class="back-link">&larr; 一覧にもどる</a>
+        `;
+      } else {
+        main.innerHTML = '<p class="empty">この日の日記はまだありません</p>';
+      }
+    } else {
+      // Show date list
+      if (!entries || entries.length === 0) {
+        main.innerHTML = '<p class="empty">まだ日記がありません</p>';
+      } else {
+        const ul = document.createElement("ul");
+        ul.className = "date-list";
+        entries.forEach(e => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <a href="diary.html#${e.date}">
+              <span class="date-label">${formatDate(e.date)}</span>
+              <span class="date-title">${e.title}</span>
+              <span class="date-arrow">&rsaquo;</span>
+            </a>
+          `;
+          ul.appendChild(li);
+        });
+        main.appendChild(ul);
+      }
+    }
+  </script>
+</body>
+</html>
